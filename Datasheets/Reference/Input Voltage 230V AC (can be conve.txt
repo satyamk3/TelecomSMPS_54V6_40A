@@ -1,0 +1,95 @@
+ Input Voltage: 230V AC (can be converted to DC for simplicity)
+ Output Voltage: 54.6V
+ Output Current: Adjustable, up to 40A (to allow for variable charge rates)
+ Topology: Synchronous buck or LLC resonant converter (for isolation)
+
+ Detailed Schematic Design with Components--
+1. Input Stage (AC-DC Rectification and Filtering)
+ Bridge Rectifier: KBPC5010 or similar, rated for 50A, 1000V.
+ EMI Filter: TDK ACM9070C-900-2P for AC line EMI suppression.
+ Input Capacitors: Panasonic ECW-F2335JB for bulk filtering; 470uF, 450V electrolytic capacitors
+ (e.g., Nichicon UHW series) to handle high-voltage DC.
+ Fuse: Littelfuse 10A 250V AC slow-blow fuse (for input protection).
+ NTC Thermistor: NTC 10D-20 for inrush current limiting.
+
+2. Power Factor Correction (PFC) Boost Converter
+ PFC Controller IC: Texas Instruments UCC28019A for active PFC control.
+ GaN Transistor for PFC: GaN Systems GS66502B, 650V, 30A (fast, efficient high-voltage
+ switching).
+ Inductor: Wurth WE-HCF 7443631400, 400uH, high-current inductor for PFC.
+ Diode: STMicroelectronics STTH8S06, ultrafast recovery diode, 600V, 8A (for PFC rectification).
+
+3. Main DC-DC Converter Stage (Isolated LLC Resonant Converter)
+ Converter Topology: LLC resonant converter, chosen for isolation and efficiency.
+ Control IC: Texas Instruments UCC256403 LLC resonant controller for precise regulation.
+ GaN Transistors for Switching: GaN Systems GS66508T, 650V, 90A, used in the primary side
+ switching half-bridge.
+ Gate Driver IC: Texas Instruments LMG1210 GaN half-bridge gate driver to control high-speed
+ switching of the GaN FETs.
+ Resonant Inductor: Wurth 7443631000, 100uH, rated for the LLC resonance.
+ Resonant Capacitors: Kemet C4AQPBW5100A3NJ, 100nF, 1000V polypropylene film capacitor
+ for resonance tuning.
+ Transformer: Custom high-frequency transformer, designed for 400V input to 54.6V output, with
+ a suitable turns ratio. You’ll need to design or source a transformer rated for at least 2kW with
+ proper isolation.
+
+4. Secondary Side (Synchronous Rectification and Filtering)
+ Synchronous Rectification Controller: Texas Instruments UCC24612 to control the synchronous
+ rectifier GaN FETs on the secondary side.
+ GaN Transistors for Rectification: GaN Systems GS61008T, 100V, 90A, on the output side for
+ synchronous rectification.
+ Output Filter Inductor: Wurth 7443558100, 100uH, 50A current rating.
+ Output Capacitors: Panasonic EEU-FR1V102L, 1000uF, 35V electrolytic capacitors in parallel
+ (for adequate ripple handling and filtering).
+
+5. Feedback and Control Circuit (Voltage and Current Regulation)
+ Control IC for CV and CC Mode: Texas Instruments BQ24650, a battery charge controller with
+ integrated feedback for constant current (CC) and constant voltage (CV) operation.
+ Current Sense Resistor: Vishay WSL2512 series, 0.01 ohm, 1W for accurate current sensing.
+ Microcontroller (optional for variable current control): STM32F103C8T6 for adjustable current
+ control and communication with the Battery Management System (BMS).
+
+6. Protections
+ Over-Voltage Protection (OVP): Texas Instruments LM5060 OVP controller to disconnect in
+ case of output over-voltage.
+ Over-Current Protection (OCP): Integrated in the BQ24650 controller for current limiting.
+ Thermistors: NTC thermistors (e.g., Murata NCP18XH103F03RB) for temperature monitoring on
+ GaN FETs and inductors.
+
+7. User Interface for Adjustable Charging Current
+ Potentiometer: Bourns 3296W-1-103LF, 10k ohm, multi-turn trimmer potentiometer connected to
+ the feedback pin of the BQ24650 for manual adjustment of the charging current.
+ Digital Control Option (using MCU): For precise digital control, the STM32 microcontroller can
+ be programmed to set the desired current via a digital-to-analog converter (DAC) output to the
+ feedback input of the BQ24650.--
+
+Sample Component Connections
+ Power Stage
+ 1. Bridge Rectifier → EMI filter → PFC Stage (using GaN transistor) to boost voltage.
+ 2. PFC Output → Bulk Capacitors → LLC Resonant Converter Primary Side (using GaN
+ half-bridge and transformer).
+ 3. Transformer Secondary → Synchronous Rectification (GaN FETs with UCC24612 control) →
+ Output LC Filter.
+
+Control and Feedback
+ 1. Voltage Feedback from the output through a resistor divider back to the UCC256403 for
+ constant voltage control.
+ 2. Current Feedback using the current sense resistor, fed into the BQ24650 to control current
+ limiting and switch between CC and CV modes.
+ 3. MCU (optional) to communicate with the BMS and adjust the current dynamically based on
+ battery status.
+
+Protections
+ 1. Over-Voltage: If the output voltage exceeds safe limits, the LM5060 disconnects the output.
+ 2. Over-Temperature: Thermistors are monitored by the MCU or BQ24650 to reduce or stop
+ charging if components overheat.--
+
+Notes
+ Cooling: GaN FETs are highly efficient but still generate some heat, so a small heatsink or fan
+ on critical components might be necessary.
+ PCB Layout: Pay close attention to PCB layout, especially around the GaN FETs, to minimize
+ parasitic inductance and capacitance.
+ Transformer Design: If isolation is required, the transformer must be custom-wound for the
+ correct turns ratio and should be designed for high-frequency operation.
+ This setup provides a solid foundation for a high-efficiency, adjustable SMPS battery charger
+ using GaN transistors.
